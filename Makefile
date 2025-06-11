@@ -25,7 +25,7 @@ setup:
 
 .PHONY: test
 test:
-	python -m coverage run -m codemod_pip_requirements.tests $(TESTOPTS)
+	pytest --cov=codemod_pip_requirements
 	python -m coverage report
 
 .PHONY: format
