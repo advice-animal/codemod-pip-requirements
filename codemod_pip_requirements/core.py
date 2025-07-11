@@ -33,8 +33,11 @@ class UnparsedLine(BaseNode):
 
 
 @dataclass
-class VcsRequirementLine(BaseNode):
+class ParsedLine(BaseNode):
+    # a parsed packaging Requirement can't roundtrip, so we store a string
+    # regardless.
     requirement: str
+
     whitespace_before_requirement: str = ""
     whitespace_after_requirement: str = ""
     comment: str = ""
@@ -52,46 +55,24 @@ class VcsRequirementLine(BaseNode):
 
 
 @dataclass
-class LocalPathRequirementLine(BaseNode):
+class VcsRequirementLine(ParsedLine):
+    pass
+
+
+@dataclass
+class LocalPathRequirementLine(ParsedLine):
     # ./foo
     # -e ../foo
-    requirement: str
-    whitespace_before_requirement: str = ""
-    whitespace_after_requirement: str = ""
-    comment: str = ""
-    newline: str = "\n"
-
-    def build(self, buf: TextIO) -> None:
-        buf.write(self.requirement)
-        buf.write(self.whitespace_before_requirement)
-        buf.write(self.whitespace_after_requirement)
-        buf.write(self.comment)
-        buf.write(self.newline)
-
-    def dump(self, buf: TextIO, indent: str = "") -> None:
-        buf.write(indent + repr(self) + "\n")
+    pass
 
 
 @dataclass
-class RequirementLine(BaseNode):
-    # a parsed Requirement can't roundtrip
-    requirement: str
-    whitespace_before_requirement: str = ""
-    whitespace_after_requirement: str = ""
-    comment: str = ""
-    newline: str = "\n"
-
-    def build(self, buf: TextIO) -> None:
-        buf.write(self.requirement)
-        buf.write(self.whitespace_before_requirement)
-        buf.write(self.whitespace_after_requirement)
-        buf.write(self.comment)
-        buf.write(self.newline)
-
-    def dump(self, buf: TextIO, indent: str = "") -> None:
-        buf.write(indent + repr(self) + "\n")
+class RequirementLine(ParsedLine):
+    pass
 
 
+# This is not defined by any spec, but represents the 99% of "normal-looking"
+# requirements that people might want to edit automatically.
 WELL_FORMED_REQUIREMENT_LINE = re.compile(
     r"([ \t]*)([^# \t][^#]*?)([ \t]*)(#.*?)?(\r?\n)$"
 )
@@ -104,6 +85,8 @@ class RequirementFile:
     @classmethod
     def parse(cls, data: str) -> "RequirementFile":
         children: list[BaseNode] = []
+        # The regex above assumes that all lines are terminated; invent the
+        # proper terminator even on Windows.
         if not data.endswith("\n"):
             if "\r\n" in data:
                 data += "\r\n"
@@ -183,5 +166,3 @@ class RequirementFile:
     def dump(self, buf: TextIO, indent: str = "") -> None:
         for c in self.children:
             c.dump(buf, indent)
-
-

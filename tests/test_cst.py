@@ -29,6 +29,16 @@ def test_just_newline():
     assert t.getvalue() == expected
 
 
+def test_just_newline_dump():
+    expected = "UnparsedLine(orig_line='\\n')\n"
+    r = RequirementFile.parse("\n")
+    assert len(r.children) == 1
+    assert isinstance(r.children[0], UnparsedLine)
+    t = StringIO()
+    r.dump(t)
+    assert t.getvalue() == expected
+
+
 def test_line_with_opts():
     expected = "-e foo\n"
     r = RequirementFile.parse(expected)
@@ -49,6 +59,16 @@ def test_just_comment():
     assert t.getvalue() == expected
 
 
+def test_just_comment_dump():
+    expected = "UnparsedLine(orig_line='#comment\\n')\n"
+    r = RequirementFile.parse("#comment\n")
+    assert len(r.children) == 1
+    assert isinstance(r.children[0], UnparsedLine)
+    t = StringIO()
+    r.dump(t)
+    assert t.getvalue() == expected
+
+
 def test_requirement():
     expected = "x\n"
     r = RequirementFile.parse(expected)
@@ -57,6 +77,17 @@ def test_requirement():
     assert r.children[0].requirement == "x"
     t = StringIO()
     r.build(t)
+    assert t.getvalue() == expected
+
+
+def test_requirement_dump():
+    expected = "RequirementLine(requirement='x', whitespace_before_requirement='', whitespace_after_requirement='', comment='', newline='\\n')\n"
+    r = RequirementFile.parse("x\n")
+    assert len(r.children) == 1
+    assert isinstance(r.children[0], RequirementLine)
+    assert r.children[0].requirement == "x"
+    t = StringIO()
+    r.dump(t)
     assert t.getvalue() == expected
 
 
